@@ -78,11 +78,11 @@ const upload = multer({
 // 获取预设图片URL的函数
 async function getDefaultPhotos() {
     return [
-        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/82d5459c72ead74cabf0213b70c6b6b7',
-        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/b01fafa663c42af8c131881d6643215c',
-        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/958889a50c9d685f60e7df231570aa04',
-        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/d7708496770634bcca9851b512cb4ee6',
-        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/851c83863e523f7aa756a92da41600fd'
+        'https://asset.cloudinary.com/dl9lxt66s/82d5459c72ead74cabf0213b70c6b6b7',
+        'https://asset.cloudinary.com/dl9lxt66s/b01fafa663c42af8c131881d6643215c',
+        'https://asset.cloudinary.com/dl9lxt66s/958889a50c9d685f60e7df231570aa04',
+        'https://asset.cloudinary.com/dl9lxt66s/d7708496770634bcca9851b512cb4ee6',
+        'https://asset.cloudinary.com/dl9lxt66s/851c83863e523f7aa756a92da41600fd'
     ];
 }
 
@@ -95,7 +95,6 @@ router.get('/', authenticateJWT, async (req, res) => {
 
     // 获取预设图片
     const defaultPhotos = await getDefaultPhotos();
-    console.log('預設圖片：', defaultPhotos); // 調試用
     
     // 將預設圖片轉換為安全的 JavaScript 字符串
     const defaultPhotosJS = JSON.stringify(defaultPhotos)
@@ -103,6 +102,7 @@ router.get('/', authenticateJWT, async (req, res) => {
         .replace(/'/g, "\\'")
         .replace(/"/g, '\\"');
     
+    // 在HTML中注入預設圖片數組
     res.send(`
         <!DOCTYPE html>
         <html>
@@ -112,7 +112,7 @@ router.get('/', authenticateJWT, async (req, res) => {
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
             <script>
                 // 在全局作用域中定義預設圖片
-                window.defaultImages = JSON.parse("${defaultPhotosJS}");
+                window.defaultImages = ${JSON.stringify(defaultPhotos)};
             </script>
             <style>
                 * {
