@@ -829,7 +829,6 @@ router.get('/', authenticateJWT, async (req, res) => {
 
                         if (!fileInput.files.length) {
                             // 如果没有选择新文件，使用当前显示的预设图片
-                            console.log('使用预设图片:', preview.src);
                             formData.append('imageUrl', preview.src);
                         } else {
                             const file = fileInput.files[0];
@@ -840,36 +839,19 @@ router.get('/', authenticateJWT, async (req, res) => {
                             formData.append('photo', file);
                         }
                         
-                        // 设置超时控制
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+                        const response = await fetch('/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const data = await response.json();
                         
-                        try {
-                            const response = await fetch('/upload', {
-                                method: 'POST',
-                                body: formData,
-                                signal: controller.signal
-                            });
-                            
-                            // 检查响应状态
-                            if (!response.ok) {
-                                const errorText = await response.text();
-                                console.error('错误响应:', errorText);
-                                throw new Error(`请求失败: 状态码 ${response.status}`);
-                            }
-                            
-                            const data = await response.json();
+                        if (response.ok) {
                             aiComment.textContent = data.comment;
                             aiComment.style.display = 'block';
                             aiComment.style.color = '#4b5563'; // 重置文字颜色为默认值
-                        } catch (error) {
-                            if (error.name === 'AbortError') {
-                                throw new Error('请求超时，请稍后再试');
-                            } else {
-                                throw error;
-                            }
-                        } finally {
-                            clearTimeout(timeoutId); // 清除超时定时器
+                        } else {
+                            throw new Error(data.error || '上傳失敗');
                         }
                     } catch (error) {
                         console.error('上傳錯誤:', error);
@@ -972,16 +954,40 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
         let imageUrl;
 
         if (req.body.imageUrl) {
-            // 如果是预设图片，直接使用其URL (本地路径)
-            imageUrl = req.body.imageUrl;
-            console.log('使用本地预设图片:', imageUrl);
-            
-            // 构建完整的图片URL (包含域名)
-            const host = process.env.HOST || 'http://localhost:3000';
-            if (imageUrl.startsWith('/')) {
-                imageUrl = `${host}${imageUrl}`;
+            // 如果是预设图片，先下载并上传到Cloudinary
+            try {
+                const response = await fetch(req.body.imageUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                
+                const uploadResponse = await new Promise((resolve, reject) => {
+                    const uploadStream = cloudinary.uploader.upload_stream(
+                        {
+                            resource_type: 'auto',
+                            folder: 'cat_photos',
+                            format: 'jpg',
+                            transformation: [
+                                {quality: 'auto:good'},
+                                {fetch_format: 'auto'}
+                            ]
+                        },
+                        (error, result) => {
+                            if (error) {
+                                console.error('Cloudinary上传错误:', error);
+                                reject(error);
+                            } else {
+                                resolve(result);
+                            }
+                        }
+                    );
+                    uploadStream.end(buffer);
+                });
+                imageUrl = uploadResponse.secure_url;
+                console.log('预设图片已上传到Cloudinary:', imageUrl);
+            } catch (error) {
+                console.error('预设图片处理错误:', error);
+                throw new Error('预设图片处理失败：' + error.message);
             }
-            console.log('完整图片URL:', imageUrl);
         } else if (req.file) {
             console.log('开始处理上传的文件:', {
                 filename: req.file.originalname,
@@ -1024,101 +1030,78 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
         console.log('使用的API Key:', process.env.OPENAI_API_KEY ? '已设置' : '未设置');
         console.log('使用的Host:', process.env.HOST || 'http://localhost:3000');
 
-        // 设置超时控制
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
-        
-        try {
-            // 使用 fetch API 获取 AI 评论
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                signal: controller.signal,
-                headers: {
-                    "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-                    "HTTP-Referer": process.env.HOST || 'http://localhost:3000',
-                    "X-Title": "Lazy Cat Project",
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "model": "openai/gpt-4o-2024-11-20",
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "你是一個風趣幽默的貓咪評論家，你會用毒舌的方式評論照片中貓咪的動作。請用200字以內簡短評論，不要使用任何標題或markdown格式。"
-                        },
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "請用毒舌的語氣，用200字以內簡短描述照片中這隻貓咪的姿態、表情和可能的想法。"
-                                },
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": imageUrl
-                                    }
+        // 使用 fetch API 获取 AI 评论
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+                "HTTP-Referer": process.env.HOST || 'http://localhost:3000',
+                "X-Title": "Lazy Cat Project",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "openai/gpt-4o-2024-11-20",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "你是一個風趣幽默的貓咪評論家，你會用毒舌的方式評論照片中貓咪的動作。請用200字以內簡短評論，不要使用任何標題或markdown格式。"
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "請用毒舌的語氣，用200字以內簡短描述照片中這隻貓咪的姿態、表情和可能的想法。"
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": imageUrl
                                 }
-                            ]
-                        }
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 500,
-                    "top_p": 0.9
-                })
+                            }
+                        ]
+                    }
+                ],
+                "temperature": 0.7,
+                "max_tokens": 500,
+                "top_p": 0.9
+            })
+        });
+
+        console.log('API响应状态:', response.status);
+        
+        const completion = await response.json();
+        console.log('API完整响应:', JSON.stringify(completion, null, 2));
+
+        if (completion.error) {
+            throw new Error(`API错误: ${completion.error.message || JSON.stringify(completion.error)}`);
+        }
+
+        if (!completion.choices || !completion.choices[0] || !completion.choices[0].message) {
+            throw new Error('API响应格式不正确: ' + JSON.stringify(completion));
+        }
+
+        const message = completion.choices[0].message;
+        if (typeof message === 'object' && message.content) {
+            console.log('成功获取AI评论:', message.content);
+            
+            // 保存到 MongoDB
+            const newPhoto = new Photo({
+                userId: req.user.id,
+                userName: req.user.name,
+                imageUrl: imageUrl,
+                aiComment: message.content
             });
 
-            console.log('API响应状态:', response.status);
-            
-            // 检查响应状态
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('API错误响应:', errorText);
-                throw new Error(`API请求失败: 状态码 ${response.status}`);
-            }
-            
-            const completion = await response.json();
-            console.log('API完整响应:', JSON.stringify(completion, null, 2));
+            await newPhoto.save();
+            console.log('照片信息已保存到MongoDB');
 
-            if (completion.error) {
-                throw new Error(`API错误: ${completion.error.message || JSON.stringify(completion.error)}`);
-            }
-
-            if (!completion.choices || !completion.choices[0] || !completion.choices[0].message) {
-                throw new Error('API响应格式不正确: ' + JSON.stringify(completion));
-            }
-
-            const message = completion.choices[0].message;
-            if (typeof message === 'object' && message.content) {
-                console.log('成功获取AI评论:', message.content);
-                
-                // 保存到 MongoDB
-                const newPhoto = new Photo({
-                    userId: req.user.id,
-                    userName: req.user.name,
-                    imageUrl: imageUrl,
-                    aiComment: message.content
-                });
-
-                await newPhoto.save();
-                console.log('照片信息已保存到MongoDB');
-
-                res.json({
-                    imageUrl: imageUrl,
-                    comment: message.content
-                });
-            } else {
-                throw new Error('无法获取AI评论内容: ' + JSON.stringify(message));
-            }
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                console.error('API请求超时');
-                throw new Error('AI评论生成超时，请稍后再试');
-            } else {
-                throw error;
-            }
-        } finally {
-            clearTimeout(timeoutId); // 清除超时定时器
+            res.json({
+                imageUrl: imageUrl,
+                comment: message.content
+            });
+        } else {
+            throw new Error('无法获取AI评论内容: ' + JSON.stringify(message));
         }
     } catch (error) {
         console.error('Upload Error:', error);
