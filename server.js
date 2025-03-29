@@ -65,25 +65,42 @@ app.use('/cat_photos', express.static('cat_photo')); // 修改為正確的目錄
 app.use('/auth', authRoutes);
 app.use('/upload', uploadRoutes);
 
-// 錯誤處理中間件
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: err.message });
-});
-
-// 404 處理
-app.use((req, res) => {
-  console.log('404 Not Found:', req.url);
-  res.status(404).json({ error: 'Not Found' });
-});
-
 // 首頁
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 404 處理
+app.use((req, res, next) => {
+    console.log('404 Not Found:', {
+        method: req.method,
+        url: req.url,
+        headers: req.headers
+    });
+    res.status(404).json({
+        error: 'Not Found',
+        path: req.url
+    });
+});
+
+// 錯誤處理中間件
+app.use((err, req, res, next) => {
+    console.error('Error:', {
+        message: err.message,
+        stack: err.stack,
+        url: req.url,
+        method: req.method
+    });
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: err.message
+    });
 });
 
 // 設置端口
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Host:', process.env.HOST);
 }); 

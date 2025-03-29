@@ -7,6 +7,13 @@ require('dotenv').config();
 
 const { GOOGLE_CLIENT_ID, GOOGLE_SECRET_KEY, JWT_SECRET, HOST } = process.env;
 
+// 添加環境變量檢查
+console.log('Environment Check:');
+console.log('HOST:', HOST);
+console.log('GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID ? 'Set' : 'Not Set');
+console.log('GOOGLE_SECRET_KEY:', GOOGLE_SECRET_KEY ? 'Set' : 'Not Set');
+console.log('JWT_SECRET:', JWT_SECRET ? 'Set' : 'Not Set');
+
 const client = new OAuth2Client({
   clientId: GOOGLE_CLIENT_ID,
   clientSecret: GOOGLE_SECRET_KEY,
@@ -15,31 +22,43 @@ const client = new OAuth2Client({
 
 // 授權路由
 router.get('/google', (req, res) => {
-  const authorizeUrl = client.generateAuthUrl({
-    access_type: 'offline',
-    scope: [
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email',
-    ],
-    prompt: 'consent'
-  });
-  console.log('Redirecting to:', authorizeUrl);
-  res.redirect(authorizeUrl);
+  try {
+    const authorizeUrl = client.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+      ],
+      prompt: 'consent'
+    });
+    console.log('Generated Auth URL:', authorizeUrl);
+    res.redirect(authorizeUrl);
+  } catch (error) {
+    console.error('Error generating auth URL:', error);
+    res.status(500).json({ error: 'Failed to generate auth URL' });
+  }
 });
 
-// 回傳路由
+// 回調路由
 router.get('/google/callback', async (req, res) => {
   const { code } = req.query;
+  console.log('Received callback with code:', code ? 'Present' : 'Not Present');
+
+  if (!code) {
+    console.error('No code received in callback');
+    return res.status(400).json({ error: 'No authorization code received' });
+  }
 
   try {
+    console.log('Attempting to get tokens...');
     const { tokens } = await client.getToken(code);
     client.setCredentials(tokens);
 
+    console.log('Fetching user info...');
     const userInfo = await client.request({
       url: 'https://www.googleapis.com/oauth2/v3/userinfo'
     });
 
-    // 創建包含必要信息的用戶對象
     const userData = {
       id: userInfo.data.sub,
       name: userInfo.data.name,
@@ -47,12 +66,20 @@ router.get('/google/callback', async (req, res) => {
       picture: userInfo.data.picture
     };
 
+    console.log('User authenticated:', userData.email);
     const token = jwt.sign(userData, JWT_SECRET);
-    res.cookie('token', token);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
     res.redirect('/upload');
   } catch (error) {
     console.error('OAuth Error:', error);
-    res.status(400).send('Error fetching Google user info');
+    res.status(400).json({
+      error: 'Authentication failed',
+      details: error.message
+    });
   }
 });
 
