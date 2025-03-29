@@ -689,9 +689,17 @@ router.get('/', authenticateJWT, async (req, res) => {
                 // 打印賦值後的 defaultImages
                 console.log("賦值後的 defaultImages:", defaultImages);
 
-                // **** 新增：嘗試立即設置初始圖片 ****
+                // **** 修改：嘗試立即設置初始圖片並添加錯誤處理 ****
                 if (preview && defaultImages && defaultImages.length > 0) {
                     console.log("嘗試立即設置初始圖片:", defaultImages[currentPhotoIndex]);
+                    
+                    // 添加圖片加載錯誤處理
+                    preview.onerror = function() {
+                        console.error("圖片加載錯誤:", preview.src);
+                        // 嘗試添加時間戳防止緩存
+                        this.src = this.src + "?t=" + new Date().getTime();
+                    };
+                    
                     preview.src = defaultImages[currentPhotoIndex];
                     previewState.style.display = 'block';
                     submitBtn.style.display = 'block';
@@ -702,7 +710,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                     initialUploadState.style.display = 'block';
                     previewState.style.display = 'none';
                 }
-                // **** 結束新增 ****
+                // **** 結束修改 ****
 
                 // 初始化時載入第一張預設圖片 (將原有邏輯註釋掉或移除)
                 window.addEventListener('DOMContentLoaded', (event) => {

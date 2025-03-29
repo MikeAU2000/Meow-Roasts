@@ -24,6 +24,10 @@
             "dest": "public/cat_photos/$1"
         },
         {
+            "src": "/cat_photo/(.*)",
+            "dest": "public/cat_photo/$1"
+        },
+        {
             "src": "/auth/(.*)",
             "dest": "server.js"
         },
