@@ -13,15 +13,15 @@
     "routes": [
         {
             "src": "/images/(.*)",
-            "dest": "/images/$1"
+            "dest": "public/images/$1"
         },
         {
             "src": "/uploads/(.*)",
-            "dest": "/uploads/$1"
+            "dest": "public/uploads/$1"
         },
         {
             "src": "/cat_photos/(.*)",
-            "dest": "/cat_photos/$1"
+            "dest": "public/cat_photos/$1"
         },
         {
             "src": "/auth/(.*)",
