@@ -77,13 +77,12 @@ const upload = multer({
 
 // 获取预设图片URL的函数
 async function getDefaultPhotos() {
-    // 使用本地 cat_photos 目录中的图片，确保扩展名正确
     return [
-        '/cat_photos/cat.jpg',
-        '/cat_photos/default_cat.jpg',
-        '/cat_photos/kitten-playing.gif',
-        '/cat_photos/photo-1514888286974-6c03e2ca1dba.jpg',
-        '/cat_photos/test_cat.jpg'
+        'https://asset.cloudinary.com/dl9lxt66s/82d5459c72ead74cabf0213b70c6b6b7',
+        'https://asset.cloudinary.com/dl9lxt66s/b01fafa663c42af8c131881d6643215c',
+        'https://asset.cloudinary.com/dl9lxt66s/958889a50c9d685f60e7df231570aa04',
+        'https://asset.cloudinary.com/dl9lxt66s/d7708496770634bcca9851b512cb4ee6',
+        'https://asset.cloudinary.com/dl9lxt66s/851c83863e523f7aa756a92da41600fd'
     ];
 }
 
