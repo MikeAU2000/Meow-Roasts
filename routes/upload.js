@@ -689,20 +689,35 @@ router.get('/', authenticateJWT, async (req, res) => {
                 // 打印賦值後的 defaultImages
                 console.log("賦值後的 defaultImages:", defaultImages);
 
-                // 初始化時載入第一張預設圖片
+                // **** 新增：嘗試立即設置初始圖片 ****
+                if (preview && defaultImages && defaultImages.length > 0) {
+                    console.log("嘗試立即設置初始圖片:", defaultImages[currentPhotoIndex]);
+                    preview.src = defaultImages[currentPhotoIndex];
+                    previewState.style.display = 'block';
+                    submitBtn.style.display = 'block';
+                    initialUploadState.style.display = 'none'; // 確保初始上傳狀態隱藏
+                } else if(preview) {
+                    // 如果沒有預設圖片，確保顯示初始上傳狀態
+                    console.log("沒有預設圖片或數組為空 (立即嘗試)");
+                    initialUploadState.style.display = 'block';
+                    previewState.style.display = 'none';
+                }
+                // **** 結束新增 ****
+
+                // 初始化時載入第一張預設圖片 (將原有邏輯註釋掉或移除)
                 window.addEventListener('DOMContentLoaded', (event) => {
-                    console.log("DOMContentLoaded 觸發");
-                    console.log("DOMContentLoaded 中的 defaultImages:", defaultImages);
-                    if (defaultImages && defaultImages.length > 0) {
-                        console.log("加載預設圖片:", defaultImages[currentPhotoIndex]);
-                        preview.src = defaultImages[currentPhotoIndex];
-                        previewState.style.display = 'block';
-                        submitBtn.style.display = 'block';
-                    } else {
-                        console.log("沒有預設圖片或數組為空");
-                        initialUploadState.style.display = 'block';
-                        previewState.style.display = 'none';
-                    }
+                    console.log("DOMContentLoaded 觸發 - 不再執行初始圖片設置");
+                    // console.log("DOMContentLoaded 中的 defaultImages:", defaultImages);
+                    // if (defaultImages && defaultImages.length > 0) {
+                    //     console.log("加載預設圖片:", defaultImages[currentPhotoIndex]);
+                    //     preview.src = defaultImages[currentPhotoIndex];
+                    //     previewState.style.display = 'block';
+                    //     submitBtn.style.display = 'block';
+                    // } else {
+                    //     console.log("沒有預設圖片或數組為空");
+                    //     initialUploadState.style.display = 'block';
+                    //     previewState.style.display = 'none';
+                    // }
                 });
 
                 // 切換到上一張圖片
