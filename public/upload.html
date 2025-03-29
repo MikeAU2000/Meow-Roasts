@@ -156,11 +156,11 @@
         const initialUploadState = document.querySelector('.initial-upload-state');
         const previewState = document.querySelector('.preview-state');
 
-        // 使用全局預設圖片數組
-        const defaultImages = window.defaultImages || [];
+        // 預設貓咪照片數組
+        const defaultCatPhotos = window.defaultImages || [];
         let currentPhotoIndex = 0;
 
-        console.log('預設圖片數組：', defaultImages); // 調試用
+        console.log('預設圖片數組：', defaultCatPhotos); // 調試用
 
         // 設置用戶頭像
         fetch('/auth/user')
@@ -217,8 +217,8 @@
             comment.textContent = '';
 
             // 隨機選擇一張預設圖片
-            const randomIndex = Math.floor(Math.random() * defaultImages.length);
-            const defaultImage = defaultImages[randomIndex];
+            const randomIndex = Math.floor(Math.random() * defaultCatPhotos.length);
+            const defaultImage = defaultCatPhotos[randomIndex];
 
             // 顯示預設圖片
             const previewImg = document.createElement('img');
@@ -251,10 +251,10 @@
 
         // 初始化時載入第一張預設圖片
         window.addEventListener('DOMContentLoaded', (event) => {
-            console.log('DOM 加載完成，預設圖片：', defaultImages); // 調試用
-            if (Array.isArray(defaultImages) && defaultImages.length > 0) {
-                console.log('載入第一張預設圖片：', defaultImages[0]); // 調試用
-                preview.src = defaultImages[0];
+            console.log('DOM 加載完成，預設圖片：', defaultCatPhotos); // 調試用
+            if (Array.isArray(defaultCatPhotos) && defaultCatPhotos.length > 0) {
+                console.log('載入第一張預設圖片：', defaultCatPhotos[0]); // 調試用
+                preview.src = defaultCatPhotos[0];
                 previewState.style.display = 'block';
                 submitBtn.style.display = 'block';
                 // 顯示導航按鈕
@@ -271,8 +271,8 @@
 
         // 切換到上一張圖片
         function prevImage() {
-            currentPhotoIndex = (currentPhotoIndex - 1 + defaultImages.length) % defaultImages.length;
-            preview.src = defaultImages[currentPhotoIndex];
+            currentPhotoIndex = (currentPhotoIndex - 1 + defaultCatPhotos.length) % defaultCatPhotos.length;
+            preview.src = defaultCatPhotos[currentPhotoIndex];
             // 確保顯示提交按鈕和導航按鈕
             submitBtn.style.display = 'block';
             document.querySelector('.prev-btn').style.display = 'flex';
@@ -281,8 +281,8 @@
 
         // 切換到下一張圖片
         function nextImage() {
-            currentPhotoIndex = (currentPhotoIndex + 1) % defaultImages.length;
-            preview.src = defaultImages[currentPhotoIndex];
+            currentPhotoIndex = (currentPhotoIndex + 1) % defaultCatPhotos.length;
+            preview.src = defaultCatPhotos[currentPhotoIndex];
             // 確保顯示提交按鈕和導航按鈕
             submitBtn.style.display = 'block';
             document.querySelector('.prev-btn').style.display = 'flex';

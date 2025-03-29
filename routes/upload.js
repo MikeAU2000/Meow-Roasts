@@ -78,11 +78,11 @@ const upload = multer({
 // 获取预设图片URL的函数
 async function getDefaultPhotos() {
     return [
-        'https://asset.cloudinary.com/dl9lxt66s/82d5459c72ead74cabf0213b70c6b6b7',
-        'https://asset.cloudinary.com/dl9lxt66s/b01fafa663c42af8c131881d6643215c',
-        'https://asset.cloudinary.com/dl9lxt66s/958889a50c9d685f60e7df231570aa04',
-        'https://asset.cloudinary.com/dl9lxt66s/d7708496770634bcca9851b512cb4ee6',
-        'https://asset.cloudinary.com/dl9lxt66s/851c83863e523f7aa756a92da41600fd'
+        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/82d5459c72ead74cabf0213b70c6b6b7',
+        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/b01fafa663c42af8c131881d6643215c',
+        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/958889a50c9d685f60e7df231570aa04',
+        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/d7708496770634bcca9851b512cb4ee6',
+        'https://res.cloudinary.com/dl9lxt66s/image/upload/v1/851c83863e523f7aa756a92da41600fd'
     ];
 }
 
