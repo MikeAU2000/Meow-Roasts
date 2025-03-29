@@ -150,6 +150,15 @@
         const viewHistoryBtn = document.getElementById('viewHistory');
         const userImage = document.getElementById('userImage');
 
+        // 預設圖片陣列
+        const defaultImages = [
+            'https://asset.cloudinary.com/dl9lxt66s/82d5459c72ead74cabf0213b70c6b6b7',
+            'https://asset.cloudinary.com/dl9lxt66s/b01fafa663c42af8c131881d6643215c',
+            'https://asset.cloudinary.com/dl9lxt66s/958889a50c9d685f60e7df231570aa04',
+            'https://asset.cloudinary.com/dl9lxt66s/d7708496770634bcca9851b512cb4ee6',
+            'https://asset.cloudinary.com/dl9lxt66s/851c83863e523f7aa756a92da41600fd'
+        ];
+
         // 設置用戶頭像
         fetch('/auth/user')
             .then(response => response.json())
@@ -199,10 +208,21 @@
             const formData = new FormData();
             formData.append('photo', file);
 
-            preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview">`;
-            comment.textContent = '';
+            // 顯示載入動畫
             loading.style.display = 'block';
+            preview.innerHTML = '';
+            comment.textContent = '';
 
+            // 隨機選擇一張預設圖片
+            const randomIndex = Math.floor(Math.random() * defaultImages.length);
+            const defaultImage = defaultImages[randomIndex];
+
+            // 顯示預設圖片
+            const previewImg = document.createElement('img');
+            previewImg.src = defaultImage;
+            preview.appendChild(previewImg);
+
+            // 上傳文件
             fetch('/upload', {
                 method: 'POST',
                 body: formData
@@ -210,15 +230,14 @@
             .then(response => response.json())
             .then(data => {
                 loading.style.display = 'none';
-                if (data.error) {
-                    comment.textContent = data.error;
-                } else {
+                if (data.comment) {
                     comment.textContent = data.comment;
                 }
             })
             .catch(error => {
+                console.error('Error:', error);
                 loading.style.display = 'none';
-                comment.textContent = '上傳失敗：' + error.message;
+                alert('上傳失敗，請稍後再試！');
             });
         }
 
