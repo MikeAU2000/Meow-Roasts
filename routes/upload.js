@@ -95,6 +95,13 @@ router.get('/', authenticateJWT, async (req, res) => {
 
     // 获取预设图片
     const defaultPhotos = await getDefaultPhotos();
+    console.log('預設圖片：', defaultPhotos); // 調試用
+    
+    // 將預設圖片轉換為安全的 JavaScript 字符串
+    const defaultPhotosJS = JSON.stringify(defaultPhotos)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"');
     
     res.send(`
         <!DOCTYPE html>
@@ -103,6 +110,10 @@ router.get('/', authenticateJWT, async (req, res) => {
             <title>Meow Roasts - 貓咪吐槽大師</title>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+            <script>
+                // 在全局作用域中定義預設圖片
+                window.defaultImages = JSON.parse("${defaultPhotosJS}");
+            </script>
             <style>
                 * {
                     margin: 0;

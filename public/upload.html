@@ -149,15 +149,18 @@
         const loading = document.getElementById('loading');
         const viewHistoryBtn = document.getElementById('viewHistory');
         const userImage = document.getElementById('userImage');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const aiComment = document.getElementById('aiComment');
+        const placeholderContent = document.getElementById('placeholderContent');
+        const initialUploadState = document.querySelector('.initial-upload-state');
+        const previewState = document.querySelector('.preview-state');
 
-        // 預設圖片陣列
-        const defaultImages = [
-            'https://asset.cloudinary.com/dl9lxt66s/82d5459c72ead74cabf0213b70c6b6b7',
-            'https://asset.cloudinary.com/dl9lxt66s/b01fafa663c42af8c131881d6643215c',
-            'https://asset.cloudinary.com/dl9lxt66s/958889a50c9d685f60e7df231570aa04',
-            'https://asset.cloudinary.com/dl9lxt66s/d7708496770634bcca9851b512cb4ee6',
-            'https://asset.cloudinary.com/dl9lxt66s/851c83863e523f7aa756a92da41600fd'
-        ];
+        // 使用全局預設圖片數組
+        const defaultImages = window.defaultImages || [];
+        let currentPhotoIndex = 0;
+
+        console.log('預設圖片數組：', defaultImages); // 調試用
 
         // 設置用戶頭像
         fetch('/auth/user')
@@ -245,6 +248,46 @@
         viewHistoryBtn.addEventListener('click', () => {
             window.location.href = '/history';
         });
+
+        // 初始化時載入第一張預設圖片
+        window.addEventListener('DOMContentLoaded', (event) => {
+            console.log('DOM 加載完成，預設圖片：', defaultImages); // 調試用
+            if (Array.isArray(defaultImages) && defaultImages.length > 0) {
+                console.log('載入第一張預設圖片：', defaultImages[0]); // 調試用
+                preview.src = defaultImages[0];
+                previewState.style.display = 'block';
+                submitBtn.style.display = 'block';
+                // 顯示導航按鈕
+                document.querySelector('.prev-btn').style.display = 'flex';
+                document.querySelector('.next-btn').style.display = 'flex';
+                // 隱藏初始上傳狀態
+                initialUploadState.style.display = 'none';
+            } else {
+                console.log('沒有可用的預設圖片'); // 調試用
+                initialUploadState.style.display = 'block';
+                previewState.style.display = 'none';
+            }
+        });
+
+        // 切換到上一張圖片
+        function prevImage() {
+            currentPhotoIndex = (currentPhotoIndex - 1 + defaultImages.length) % defaultImages.length;
+            preview.src = defaultImages[currentPhotoIndex];
+            // 確保顯示提交按鈕和導航按鈕
+            submitBtn.style.display = 'block';
+            document.querySelector('.prev-btn').style.display = 'flex';
+            document.querySelector('.next-btn').style.display = 'flex';
+        }
+
+        // 切換到下一張圖片
+        function nextImage() {
+            currentPhotoIndex = (currentPhotoIndex + 1) % defaultImages.length;
+            preview.src = defaultImages[currentPhotoIndex];
+            // 確保顯示提交按鈕和導航按鈕
+            submitBtn.style.display = 'block';
+            document.querySelector('.prev-btn').style.display = 'flex';
+            document.querySelector('.next-btn').style.display = 'flex';
+        }
     </script>
 </body>
 </html> 
