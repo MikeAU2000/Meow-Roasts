@@ -976,21 +976,22 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
         if (req.body.imageUrl) {
             // 檢查是否為本地圖片路徑 (以 /cat_photo/ 開頭)
             if (req.body.imageUrl.startsWith('/cat_photo/')) {
-                // 本地圖片，直接讀取文件
+                // 本地圖片，使用 fetch 從相對 URL 請求圖片
                 try {
-                    const fs = require('fs');
-                    const path = require('path');
-                    const localPath = path.join(__dirname, '..', 'public', req.body.imageUrl);
+                    // 構建完整的 URL（基於當前服務器域名）
+                    const baseUrl = process.env.HOST || `https://${req.headers.host}`;
+                    const fullImageUrl = `${baseUrl}${req.body.imageUrl}`;
                     
-                    console.log('讀取本地預設圖片:', localPath);
+                    console.log('從 URL 獲取本地預設圖片:', fullImageUrl);
                     
-                    // 檢查文件是否存在
-                    if (!fs.existsSync(localPath)) {
-                        throw new Error('預設圖片文件不存在: ' + localPath);
+                    const response = await fetch(fullImageUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`無法獲取預設圖片: ${response.status} ${response.statusText}`);
                     }
                     
-                    // 讀取文件內容
-                    const fileBuffer = fs.readFileSync(localPath);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
                     
                     // 上傳到 Cloudinary
                     const uploadResponse = await new Promise((resolve, reject) => {
@@ -1013,7 +1014,7 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
                                 }
                             }
                         );
-                        uploadStream.end(fileBuffer);
+                        uploadStream.end(buffer);
                     });
                     imageUrl = uploadResponse.secure_url;
                     console.log('預設圖片已上傳到Cloudinary:', imageUrl);
