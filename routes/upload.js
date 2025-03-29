@@ -818,60 +818,46 @@ router.get('/', authenticateJWT, async (req, res) => {
                     }
                 });
 
-                // 修改 submitPhoto 函數來處理預設圖片
+                // 修改提交函数，添加错误处理
                 async function submitPhoto() {
-                    // 顯示加載動畫
-                    loadingContainer.classList.add('active');
-                    placeholderContent.style.display = 'none';
-                    aiComment.textContent = '';
-                    
                     try {
-                        // 獲取當前顯示的圖片路徑
-                        const currentImageSrc = preview.src;
+                        loadingContainer.classList.add('active');
+                        placeholderContent.style.display = 'none';
+                        aiComment.textContent = '';
+
                         let formData = new FormData();
-                        
-                        // 檢查是否為預設圖片
-                        if (currentImageSrc.includes('/cat_photo/')) {
-                            // 這是預設圖片，需要先獲取再上傳
-                            console.log("檢測到預設圖片，先獲取再上傳:", currentImageSrc);
-                            
-                            // 獲取預設圖片
-                            const response = await fetch(currentImageSrc);
-                            const blob = await response.blob();
-                            
-                            // 從URL中提取文件名
-                            const fileName = currentImageSrc.split('/').pop();
-                            
-                            // 創建文件對象並添加到FormData
-                            const file = new File([blob], fileName, { type: blob.type });
-                            formData.append('photo', file);
+
+                        if (!fileInput.files.length) {
+                            // 如果没有选择新文件，使用当前显示的预设图片
+                            formData.append('imageUrl', preview.src);
                         } else {
-                            // 用戶上傳的圖片，從fileInput中獲取
-                            if (fileInput.files.length === 0) {
-                                throw new Error('請先選擇一張圖片');
+                            const file = fileInput.files[0];
+                            // 再次检查文件大小
+                            if (file.size > 10 * 1024 * 1024) {
+                                throw new Error('圖片大小不能超過 10MB');
                             }
-                            formData.append('photo', fileInput.files[0]);
+                            formData.append('photo', file);
                         }
                         
-                        // 發送請求到伺服器
                         const response = await fetch('/upload', {
                             method: 'POST',
                             body: formData
                         });
-                        
-                        if (!response.ok) {
-                            throw new Error(`伺服器回應錯誤：${response.status}`);
-                        }
-                        
+
                         const data = await response.json();
                         
-                        // 顯示AI評論
-                        aiComment.textContent = data.comment;
+                        if (response.ok) {
+                            aiComment.textContent = data.comment;
+                            aiComment.style.display = 'block';
+                            aiComment.style.color = '#4b5563'; // 重置文字颜色为默认值
+                        } else {
+                            throw new Error(data.error || '上傳失敗');
+                        }
                     } catch (error) {
                         console.error('上傳錯誤:', error);
-                        aiComment.textContent = `發生錯誤：${error.message}`;
+                        aiComment.textContent = '抱歉，評論生成失敗：' + error.message;
+                        aiComment.style.color = '#ff4444';
                     } finally {
-                        // 隱藏加載動畫
                         loadingContainer.classList.remove('active');
                     }
                 }
