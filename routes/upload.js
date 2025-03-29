@@ -829,6 +829,7 @@ router.get('/', authenticateJWT, async (req, res) => {
 
                         if (!fileInput.files.length) {
                             // 如果没有选择新文件，使用当前显示的预设图片
+                            console.log('使用預設圖片進行評論:', preview.src);
                             formData.append('imageUrl', preview.src);
                         } else {
                             const file = fileInput.files[0];
@@ -836,23 +837,32 @@ router.get('/', authenticateJWT, async (req, res) => {
                             if (file.size > 10 * 1024 * 1024) {
                                 throw new Error('圖片大小不能超過 10MB');
                             }
+                            console.log('使用上傳的圖片進行評論');
                             formData.append('photo', file);
                         }
                         
+                        console.log('提交圖片獲取評論...');
                         const response = await fetch('/upload', {
                             method: 'POST',
                             body: formData
                         });
 
+                        if (!response.ok) {
+                            const text = await response.text();
+                            console.error('服務器響應錯誤:', response.status, text);
+                            try {
+                                const data = JSON.parse(text);
+                                throw new Error(data.error || `伺服器錯誤 (${response.status})`);
+                            } catch (e) {
+                                throw new Error(`伺服器錯誤 (${response.status}): ${text.substring(0, 100)}...`);
+                            }
+                        }
+
                         const data = await response.json();
                         
-                        if (response.ok) {
-                            aiComment.textContent = data.comment;
-                            aiComment.style.display = 'block';
-                            aiComment.style.color = '#4b5563'; // 重置文字颜色为默认值
-                        } else {
-                            throw new Error(data.error || '上傳失敗');
-                        }
+                        aiComment.textContent = data.comment;
+                        aiComment.style.display = 'block';
+                        aiComment.style.color = '#4b5563'; // 重置文字颜色为默认值
                     } catch (error) {
                         console.error('上傳錯誤:', error);
                         aiComment.textContent = '抱歉，評論生成失敗：' + error.message;
@@ -951,42 +961,101 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
     }
     
     try {
+        console.log('開始處理上傳請求，用戶:', req.user.name);
+        if (req.body.imageUrl) {
+            console.log('檢測到預設圖片URL:', req.body.imageUrl);
+        } else if (req.file) {
+            console.log('檢測到上傳文件:', req.file.originalname);
+        } else {
+            console.log('沒有檢測到圖片或文件');
+            return res.status(400).json({ error: '請提供圖片' });
+        }
+
         let imageUrl;
 
         if (req.body.imageUrl) {
-            // 如果是预设图片，先下载并上传到Cloudinary
-            try {
-                const response = await fetch(req.body.imageUrl);
-                const arrayBuffer = await response.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                
-                const uploadResponse = await new Promise((resolve, reject) => {
-                    const uploadStream = cloudinary.uploader.upload_stream(
-                        {
-                            resource_type: 'auto',
-                            folder: 'cat_photos',
-                            format: 'jpg',
-                            transformation: [
-                                {quality: 'auto:good'},
-                                {fetch_format: 'auto'}
-                            ]
-                        },
-                        (error, result) => {
-                            if (error) {
-                                console.error('Cloudinary上传错误:', error);
-                                reject(error);
-                            } else {
-                                resolve(result);
+            // 檢查是否為本地圖片路徑 (以 /cat_photo/ 開頭)
+            if (req.body.imageUrl.startsWith('/cat_photo/')) {
+                // 本地圖片，直接讀取文件
+                try {
+                    const fs = require('fs');
+                    const path = require('path');
+                    const localPath = path.join(__dirname, '..', 'public', req.body.imageUrl);
+                    
+                    console.log('讀取本地預設圖片:', localPath);
+                    
+                    // 檢查文件是否存在
+                    if (!fs.existsSync(localPath)) {
+                        throw new Error('預設圖片文件不存在: ' + localPath);
+                    }
+                    
+                    // 讀取文件內容
+                    const fileBuffer = fs.readFileSync(localPath);
+                    
+                    // 上傳到 Cloudinary
+                    const uploadResponse = await new Promise((resolve, reject) => {
+                        const uploadStream = cloudinary.uploader.upload_stream(
+                            {
+                                resource_type: 'auto',
+                                folder: 'cat_photos',
+                                format: 'jpg',
+                                transformation: [
+                                    {quality: 'auto:good'},
+                                    {fetch_format: 'auto'}
+                                ]
+                            },
+                            (error, result) => {
+                                if (error) {
+                                    console.error('Cloudinary上傳錯誤:', error);
+                                    reject(error);
+                                } else {
+                                    resolve(result);
+                                }
                             }
-                        }
-                    );
-                    uploadStream.end(buffer);
-                });
-                imageUrl = uploadResponse.secure_url;
-                console.log('预设图片已上传到Cloudinary:', imageUrl);
-            } catch (error) {
-                console.error('预设图片处理错误:', error);
-                throw new Error('预设图片处理失败：' + error.message);
+                        );
+                        uploadStream.end(fileBuffer);
+                    });
+                    imageUrl = uploadResponse.secure_url;
+                    console.log('預設圖片已上傳到Cloudinary:', imageUrl);
+                } catch (error) {
+                    console.error('預設圖片處理錯誤:', error);
+                    throw new Error('預設圖片處理失敗：' + error.message);
+                }
+            } else {
+                // 外部URL圖片，使用fetch下載
+                try {
+                    const response = await fetch(req.body.imageUrl);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+                    
+                    const uploadResponse = await new Promise((resolve, reject) => {
+                        const uploadStream = cloudinary.uploader.upload_stream(
+                            {
+                                resource_type: 'auto',
+                                folder: 'cat_photos',
+                                format: 'jpg',
+                                transformation: [
+                                    {quality: 'auto:good'},
+                                    {fetch_format: 'auto'}
+                                ]
+                            },
+                            (error, result) => {
+                                if (error) {
+                                    console.error('Cloudinary上傳錯誤:', error);
+                                    reject(error);
+                                } else {
+                                    resolve(result);
+                                }
+                            }
+                        );
+                        uploadStream.end(buffer);
+                    });
+                    imageUrl = uploadResponse.secure_url;
+                    console.log('外部圖片已上傳到Cloudinary:', imageUrl);
+                } catch (error) {
+                    console.error('外部圖片處理錯誤:', error);
+                    throw new Error('外部圖片處理失敗：' + error.message);
+                }
             }
         } else if (req.file) {
             console.log('开始处理上传的文件:', {
