@@ -65,6 +65,18 @@ app.use('/cat_photos', express.static('cat_photo')); // 修改為正確的目錄
 app.use('/auth', authRoutes);
 app.use('/upload', uploadRoutes);
 
+// 錯誤處理中間件
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: err.message });
+});
+
+// 404 處理
+app.use((req, res) => {
+  console.log('404 Not Found:', req.url);
+  res.status(404).json({ error: 'Not Found' });
+});
+
 // 首頁
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

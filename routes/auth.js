@@ -23,6 +23,7 @@ router.get('/google', (req, res) => {
     ],
     prompt: 'consent'
   });
+  console.log('Redirecting to:', authorizeUrl);
   res.redirect(authorizeUrl);
 });
 
