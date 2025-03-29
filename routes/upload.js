@@ -629,7 +629,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                                     <button class="nav-btn prev-btn" onclick="prevImage()">
                                         <i class="fa-solid fa-chevron-left"></i>
                                     </button>
-                                    <img id="preview" src="/cat_photos/default_cat.jpg" alt="預設貓咪照片">
+                                    <img id="preview" alt="預設貓咪照片">
                                     <button class="nav-btn next-btn" onclick="nextImage()">
                                         <i class="fa-solid fa-chevron-right"></i>
                                     </button>
