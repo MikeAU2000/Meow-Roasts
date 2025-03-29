@@ -679,17 +679,27 @@ router.get('/', authenticateJWT, async (req, res) => {
                 const initialUploadState = document.querySelector('.initial-upload-state');
                 const previewState = document.querySelector('.preview-state');
 
+                // 打印 window.defaultImages 的原始值
+                console.log("原始 window.defaultImages:", window.defaultImages);
+
                 // 預設貓咪照片數組
-                const defaultCatPhotos = ${JSON.stringify(defaultPhotos)};
+                const defaultImages = window.defaultImages;
                 let currentPhotoIndex = 0;
+
+                // 打印賦值後的 defaultImages
+                console.log("賦值後的 defaultImages:", defaultImages);
 
                 // 初始化時載入第一張預設圖片
                 window.addEventListener('DOMContentLoaded', (event) => {
-                    if (defaultCatPhotos.length > 0) {
-                        preview.src = defaultCatPhotos[currentPhotoIndex];
+                    console.log("DOMContentLoaded 觸發");
+                    console.log("DOMContentLoaded 中的 defaultImages:", defaultImages);
+                    if (defaultImages && defaultImages.length > 0) {
+                        console.log("加載預設圖片:", defaultImages[currentPhotoIndex]);
+                        preview.src = defaultImages[currentPhotoIndex];
                         previewState.style.display = 'block';
                         submitBtn.style.display = 'block';
                     } else {
+                        console.log("沒有預設圖片或數組為空");
                         initialUploadState.style.display = 'block';
                         previewState.style.display = 'none';
                     }
@@ -697,16 +707,16 @@ router.get('/', authenticateJWT, async (req, res) => {
 
                 // 切換到上一張圖片
                 function prevImage() {
-                    currentPhotoIndex = (currentPhotoIndex - 1 + defaultCatPhotos.length) % defaultCatPhotos.length;
-                    preview.src = defaultCatPhotos[currentPhotoIndex];
+                    currentPhotoIndex = (currentPhotoIndex - 1 + defaultImages.length) % defaultImages.length;
+                    preview.src = defaultImages[currentPhotoIndex];
                     // 確保顯示提交按鈕
                     submitBtn.style.display = 'block';
                 }
 
                 // 切換到下一張圖片
                 function nextImage() {
-                    currentPhotoIndex = (currentPhotoIndex + 1) % defaultCatPhotos.length;
-                    preview.src = defaultCatPhotos[currentPhotoIndex];
+                    currentPhotoIndex = (currentPhotoIndex + 1) % defaultImages.length;
+                    preview.src = defaultImages[currentPhotoIndex];
                     // 確保顯示提交按鈕
                     submitBtn.style.display = 'block';
                 }
@@ -748,7 +758,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                     // 顯示導航按鈕
                     document.querySelector('.prev-btn').style.display = 'flex';
                     document.querySelector('.next-btn').style.display = 'flex';
-                    preview.src = defaultCatPhotos[currentPhotoIndex];
+                    preview.src = defaultImages[currentPhotoIndex];
                     fileInput.value = '';  // 清空文件輸入
                     submitBtn.style.display = 'block';
                     
