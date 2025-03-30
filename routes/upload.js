@@ -88,11 +88,6 @@ async function getDefaultPhotos() {
 
 // 修改上传页面路由
 router.get('/', authenticateJWT, async (req, res) => {
-    // 如果用戶未登入，重定向到登入頁面
-    if (!req.user) {
-        return res.redirect('/auth/google');
-    }
-
     // 获取预设图片
     const defaultPhotos = await getDefaultPhotos();
     
@@ -603,7 +598,8 @@ router.get('/', authenticateJWT, async (req, res) => {
                         <h1>Meow Roast</h1>
                     </div>
                     <div class="user-profile">
-                        <div class="dropdown">
+                        ${req.user ? 
+                        `<div class="dropdown">
                             <button class="history-btn" onclick="toggleDropdown(event)">
                                 <i class="fa-solid fa-bars"></i>
                                 選單
@@ -616,8 +612,11 @@ router.get('/', authenticateJWT, async (req, res) => {
                                 </a>
                             </div>
                         </div>
-                        <img src="${req.user ? req.user.picture : 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'}" class="user-avatar" alt="用戶頭像">
-                        <span>${req.user ? req.user.name : '請先登入'}</span>
+                        <img src="${req.user.picture}" alt="用戶頭像" class="user-avatar">` :
+                        `<a href="/auth/google" class="history-btn">
+                            <i class="fa-solid fa-sign-in-alt"></i>
+                            登入
+                        </a>`}
                     </div>
                 </div>
             </div>
@@ -904,6 +903,12 @@ router.get('/', authenticateJWT, async (req, res) => {
                 async function showHistory() {
                     try {
                         const response = await fetch('/upload/history');
+                        if (response.status === 401) {
+                            const historyList = document.getElementById('historyList');
+                            historyList.innerHTML = '<div style="padding: 15px; text-align: center;"><p>請先登入以查看歷史記錄</p><a href="/auth/google" class="btn btn-primary" style="margin-top: 10px;">前往登入</a></div>';
+                            return;
+                        }
+                        
                         const data = await response.json();
                         if (data.error) {
                             alert(data.error);
@@ -964,11 +969,6 @@ router.get('/', authenticateJWT, async (req, res) => {
 
 // 處理上傳
 router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
-    // 如果用戶未登入，返回錯誤
-    if (!req.user) {
-        return res.status(401).json({ error: '請先登入' });
-    }
-    
     try {
         let imageUrl;
 
@@ -1105,15 +1105,19 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
             console.log('成功获取AI评论:', message.content);
             
             // 保存到 MongoDB
-            const newPhoto = new Photo({
-                userId: req.user.id,
-                userName: req.user.name,
-                imageUrl: imageUrl,
-                aiComment: message.content
-            });
+            if (req.user) {
+                const newPhoto = new Photo({
+                    userId: req.user.id,
+                    userName: req.user.name,
+                    imageUrl: imageUrl,
+                    aiComment: message.content
+                });
 
-            await newPhoto.save();
-            console.log('照片信息已保存到MongoDB');
+                await newPhoto.save();
+                console.log('照片信息已保存到MongoDB');
+            } else {
+                console.log('试用模式：用户未登录，不保存照片信息到数据库');
+            }
 
             res.json({
                 imageUrl: imageUrl,
