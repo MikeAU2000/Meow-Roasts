@@ -107,7 +107,7 @@ router.get('/', authenticateJWT, async (req, res) => {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Meow Roasts - 貓咪吐槽大師</title>
+            <title>Meow Roast - 貓咪吐槽大師</title>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
             <script>
@@ -179,11 +179,13 @@ router.get('/', authenticateJWT, async (req, res) => {
                     border-radius: 12px;
                     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
                     overflow: hidden;
+                    min-height: 75vh;
                 }
 
                 .content-grid {
                     display: grid;
                     grid-template-columns: 1fr 1fr;
+                    height: 100%;
                 }
 
                 .upload-section, .result-section {
@@ -217,6 +219,10 @@ router.get('/', authenticateJWT, async (req, res) => {
                     background-color: #f9fafb;
                     transition: all 0.3s ease;
                     cursor: pointer;
+                    min-height: 450px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
                 }
 
                 .upload-area:hover, .upload-area.dragover {
@@ -269,11 +275,12 @@ router.get('/', authenticateJWT, async (req, res) => {
                 }
 
                 .preview-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 1rem;
                     position: relative;
-                    margin: 1rem auto;
-                    max-width: 100%;
-                    border-radius: 8px;
-                    overflow: hidden;
+                    height: 400px;
                 }
 
                 .nav-btn {
@@ -308,24 +315,29 @@ router.get('/', authenticateJWT, async (req, res) => {
 
                 #preview {
                     max-width: 100%;
-                    max-height: 200px;
+                    max-height: 400px;
                     object-fit: contain;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                 }
 
                 .result-section {
-                    background-color: #f9fafb;
-                    position: relative;
+                    padding: 2rem;
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
                 }
 
                 .comment-container {
+                    background-color: #f9fafb;
                     border-radius: 12px;
-                    background: white;
                     padding: 1.5rem;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                    height: 320px;
-                    overflow-y: auto;
-                    position: relative;
-                    line-height: 1.8;
+                    margin-bottom: 1.5rem;
+                    min-height: 350px;
+                    flex-grow: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
                 }
 
                 #aiComment {
@@ -407,8 +419,8 @@ router.get('/', authenticateJWT, async (req, res) => {
                 }
 
                 .preview-state {
+                    display: none;
                     width: 100%;
-                    text-align: center;
                 }
 
                 .preview-container {
@@ -584,7 +596,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                 <div class="header-content">
                     <div class="logo">
                         <i class="fa-solid fa-cat logo-icon"></i>
-                        <h1>Meow Roasts</h1>
+                        <h1>Meow Roast</h1>
                     </div>
                     <div class="user-profile">
                         <div class="dropdown">
