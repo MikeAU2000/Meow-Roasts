@@ -344,22 +344,25 @@ router.get('/', authenticateJWT, async (req, res) => {
                     font-size: 1rem;
                     color: #4b5563;
                     font-style: italic;
+                    padding: 1rem;
+                    width: 100%;
+                    min-height: 100px;
+                    display: none;
                 }
 
                 .loading-container {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
+                    position: relative;
+                    margin: 2rem auto;
+                    padding: 2rem;
                     width: 100%;
-                    height: 100%;
-                    background: rgba(255, 255, 255, 0.9);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    z-index: 10;
+                    z-index: 5;
                     border-radius: 12px;
                     display: none;
+                    background-color: rgba(245, 247, 250, 0.5);
                 }
 
                 .loading-container.active {
@@ -367,9 +370,9 @@ router.get('/', authenticateJWT, async (req, res) => {
                 }
 
                 .loading-spinner {
-                    width: 50px;
-                    height: 50px;
-                    border: 4px solid rgba(106, 17, 203, 0.1);
+                    width: 40px;
+                    height: 40px;
+                    border: 3px solid rgba(106, 17, 203, 0.1);
                     border-radius: 50%;
                     border-top-color: #6a11cb;
                     animation: spin 1s linear infinite;
@@ -378,7 +381,7 @@ router.get('/', authenticateJWT, async (req, res) => {
 
                 .loading-text {
                     color: #6a11cb;
-                    font-size: 0.9rem;
+                    font-size: 1rem;
                     font-weight: 500;
                 }
 
@@ -391,6 +394,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                     text-align: center;
                     padding: 2rem;
                     color: #9ca3af;
+                    width: 100%;
                 }
 
                 .cat-icon {
@@ -836,6 +840,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                         loadingContainer.classList.add('active');
                         placeholderContent.style.display = 'none';
                         aiComment.textContent = '';
+                        aiComment.style.display = 'none';
 
                         let formData = new FormData();
 
@@ -869,6 +874,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                         console.error('上傳錯誤:', error);
                         aiComment.textContent = '抱歉，評論生成失敗：' + error.message;
                         aiComment.style.color = '#ff4444';
+                        aiComment.style.display = 'block';
                     } finally {
                         loadingContainer.classList.remove('active');
                     }
