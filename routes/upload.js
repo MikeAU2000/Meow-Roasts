@@ -940,6 +940,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                             historyItem.onclick = function(e) {
                                 e.preventDefault();
                                 aiComment.textContent = photo.aiComment;
+                                aiComment.style.display = 'block';
                                 placeholderContent.style.display = 'none';
                                 preview.src = photo.imageUrl;
                                 initialUploadState.style.display = 'none';
