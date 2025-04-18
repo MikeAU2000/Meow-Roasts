@@ -1059,7 +1059,9 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "model": "openai/gpt-4o-2024-11-20",
+                //openai/gpt-4.1
+                //openai/gpt-4o-2024-11-20
+                "model": "openai/gpt-4.1",
                 "messages": [
                     {
                         "role": "system",
