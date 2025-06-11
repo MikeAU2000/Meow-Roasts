@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Photo = require('../models/Photo');
 
-// JWT 驗證中間件
+
 const authenticateJWT = (req, res, next) => {
     const token = req.cookies.token;
     
@@ -29,7 +29,7 @@ const authenticateJWT = (req, res, next) => {
     }
 };
 
-// 初始化 OpenAI
+
 const openai = new OpenAI({
     baseURL: 'https://openrouter.ai/api/v1',
     apiKey: process.env.OPENAI_API_KEY,
@@ -39,20 +39,19 @@ const openai = new OpenAI({
     },
 });
 
-// Cloudinary 配置
+
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_URL.split('://')[1].split(':')[0],
     api_secret: process.env.CLOUDINARY_URL.split(':')[2].split('@')[0]
 });
 
-// 配置 multer 存儲
+
 const storage = multer.memoryStorage(); // 改用記憶體存儲
 
 const upload = multer({ 
     storage: storage,
     fileFilter: function (req, file, cb) {
-        // 支持更多图片格式
         const filetypes = /jpeg|jpg|png|gif|webp|heic|heif/;
         const mimetype = filetypes.test(file.mimetype.toLowerCase());
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -75,7 +74,7 @@ const upload = multer({
     }
 });
 
-// 获取预设图片URL的函数
+
 async function getDefaultPhotos() {
     return [
         '/cat_photo/default_cat.jpg',
@@ -86,18 +85,16 @@ async function getDefaultPhotos() {
     ];
 }
 
-// 修改上传页面路由
+
 router.get('/', authenticateJWT, async (req, res) => {
-    // 获取预设图片
     const defaultPhotos = await getDefaultPhotos();
     
-    // 將預設圖片轉換為安全的 JavaScript 字符串
     const defaultPhotosJS = JSON.stringify(defaultPhotos)
         .replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'")
         .replace(/"/g, '\\"');
     
-    // 在HTML中注入預設圖片數組
+
     res.send(`
         <!DOCTYPE html>
         <html>
@@ -106,7 +103,6 @@ router.get('/', authenticateJWT, async (req, res) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
             <script>
-                // 在全局作用域中定義預設圖片
                 window.defaultImages = ${JSON.stringify(defaultPhotos)};
             </script>
             <style>
@@ -844,11 +840,9 @@ router.get('/', authenticateJWT, async (req, res) => {
                         let formData = new FormData();
 
                         if (!fileInput.files.length) {
-                            // 如果没有选择新文件，使用当前显示的预设图片
                             formData.append('imageUrl', preview.src);
                         } else {
                             const file = fileInput.files[0];
-                            // 再次检查文件大小
                             if (file.size > 10 * 1024 * 1024) {
                                 throw new Error('圖片大小不能超過 10MB');
                             }
@@ -879,19 +873,16 @@ router.get('/', authenticateJWT, async (req, res) => {
                     }
                 }
 
-                // 切換下拉菜單
                 function toggleDropdown(event) {
                     event.stopPropagation();
                     const dropdownMenu = document.getElementById('dropdownMenu');
                     dropdownMenu.classList.toggle('show');
                     
-                    // 如果菜單被打開，則加載歷史記錄
                     if (dropdownMenu.classList.contains('show')) {
                         showHistory();
                     }
                 }
 
-                // 點擊其他地方關閉下拉菜單
                 document.addEventListener('click', function(event) {
                     const dropdownMenu = document.getElementById('dropdownMenu');
                     if (dropdownMenu.classList.contains('show')) {
@@ -899,7 +890,6 @@ router.get('/', authenticateJWT, async (req, res) => {
                     }
                 });
 
-                // 顯示歷史記錄
                 async function showHistory() {
                     try {
                         const response = await fetch('/upload/history');
@@ -918,7 +908,7 @@ router.get('/', authenticateJWT, async (req, res) => {
                         const historyList = document.getElementById('historyList');
                         historyList.innerHTML = '';
 
-                        // 只顯示最近的10條記錄
+
                         const recentPhotos = data.slice(0, 10);
                         
                         recentPhotos.forEach(photo => {
@@ -941,7 +931,6 @@ router.get('/', authenticateJWT, async (req, res) => {
                                     '<p>' + formattedDate + '</p>' +
                                 '</div>';
 
-                            // 當點擊歷史記錄項目時
                             historyItem.onclick = function(e) {
                                 e.preventDefault();
                                 aiComment.textContent = photo.aiComment;
@@ -967,13 +956,12 @@ router.get('/', authenticateJWT, async (req, res) => {
     `);
 });
 
-// 處理上傳
+
 router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
     try {
         let imageUrl;
 
         if (req.body.imageUrl) {
-            // 如果是预设图片，先下载并上传到Cloudinary
             try {
                 const response = await fetch(req.body.imageUrl);
                 const arrayBuffer = await response.arrayBuffer();
@@ -1014,16 +1002,15 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
                 size: req.file.size
             });
 
-            // 上传到Cloudinary
             const uploadResponse = await new Promise((resolve, reject) => {
                 const uploadStream = cloudinary.uploader.upload_stream(
                     {
                         resource_type: 'auto',
                         folder: 'cat_photos',
-                        format: 'jpg', // 统一转换为jpg格式
+                        format: 'jpg', 
                         transformation: [
-                            {quality: 'auto:good'}, // 自动优化质量
-                            {fetch_format: 'auto'} // 自动选择最佳格式
+                            {quality: 'auto:good'}, 
+                            {fetch_format: 'auto'} 
                         ]
                     },
                     (error, result) => {
@@ -1049,7 +1036,6 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
         console.log('使用的API Key:', process.env.OPENAI_API_KEY ? '已设置' : '未设置');
         console.log('使用的Host:', process.env.HOST || 'http://localhost:3000');
 
-        // 使用 fetch API 获取 AI 评论
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -1104,7 +1090,6 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
         if (typeof message === 'object' && message.content) {
             console.log('成功获取AI评论:', message.content);
             
-            // 保存到 MongoDB
             if (req.user) {
                 const newPhoto = new Photo({
                     userId: req.user.id,
@@ -1132,18 +1117,15 @@ router.post('/', authenticateJWT, upload.single('photo'), async (req, res) => {
     }
 });
 
-// 獲取歷史記錄
 router.get('/history', authenticateJWT, async (req, res) => {
-    // 檢查用戶是否已登入
     if (!req.user || !req.user.id) {
         return res.status(401).json({ error: '請先登入' });
     }
 
     try {
-        // 只查詢當前用戶的照片記錄
         const photos = await Photo.find({ userId: req.user.id })
             .sort({ createdAt: -1 })
-            .limit(10); // 直接在數據庫查詢時限制返回10條記錄
+            .limit(10); 
         res.json(photos);
     } catch (error) {
         console.error('Error fetching history:', error);

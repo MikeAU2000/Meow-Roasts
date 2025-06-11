@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const { GOOGLE_CLIENT_ID, GOOGLE_SECRET_KEY, JWT_SECRET, HOST } = process.env;
 
-// 添加環境變量檢查
+
 console.log('Environment Check:');
 console.log('HOST:', HOST);
 console.log('GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID ? 'Set' : 'Not Set');
@@ -20,7 +20,7 @@ const client = new OAuth2Client({
   redirectUri: `${HOST}/auth/google/callback`,
 });
 
-// 授權路由
+
 router.get('/google', (req, res) => {
   try {
     const authorizeUrl = client.generateAuthUrl({
@@ -39,7 +39,7 @@ router.get('/google', (req, res) => {
   }
 });
 
-// 回調路由
+
 router.get('/google/callback', async (req, res) => {
   const { code } = req.query;
   console.log('Received callback with code:', code ? 'Present' : 'Not Present');
@@ -83,7 +83,6 @@ router.get('/google/callback', async (req, res) => {
   }
 });
 
-// 登入成功頁面
 router.get('/success', authenticateJWT, async (req, res) => {
   try {
     const userInfo = await client.request({
@@ -150,19 +149,17 @@ router.get('/success', authenticateJWT, async (req, res) => {
   }
 });
 
-// 登出路由
 router.get('/logout', (req, res) => {
   res.clearCookie('token');
   res.redirect('/');
 });
 
-// 驗證 JWT
+
 function authenticateJWT(req, res, next) {
   const token = req.cookies.token || req.header('Authorization');
   console.log('Token:', token);
 
   if (token) {
-    // 如果 token 是從 Authorization header 來的，需要移除 'Bearer ' 前綴
     const tokenString = token.startsWith('Bearer ') ? token.slice(7) : token;
 
     jwt.verify(tokenString, JWT_SECRET, (err, user) => {
